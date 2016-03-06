@@ -149,6 +149,7 @@ outTableFunc <- function(modelImputed){
   ## NOTE: warning message is fine because the function should only
   ## read the first argument, which is FALSE for imputed models
   else{
+    
   # param=1 gives coefficient estimates, param=2 gives SEs
   lm.mids.vals <- function(obj,param) { 
     out.mat <- NULL
@@ -195,3 +196,19 @@ outTableFunc(model2.caseWise)
 # model3
 outTableFunc(model3.imputed)
 outTableFunc(model3.caseWise)
+
+##################################
+### retrieve model predictions ###
+
+# since coefficient estimates are similar for imputed and casewise deleted models
+# only create test set with predictions from casewise deleted models
+
+# get predictions for:
+# model 1
+model1pred <- predict(model1.caseWise, testSet.caseWise)
+
+# model 2
+model2pred <- predict(model2.caseWise, testSet.caseWise)
+
+# model 3
+model3pred <- predict(model3.caseWise, testSet.caseWise)

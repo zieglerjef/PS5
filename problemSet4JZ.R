@@ -9,7 +9,7 @@ options(stringsAsFactors=F)
 library(foreign)
 
 ## read in data
-anes <- read.dta("C:/Users/Jona/Documents/Uni/WashU5/4625-Programming/PS5/anes_timeseries_2012_stata12.dta")
+anes <- read.dta("~/Google Drive/WashU/Spring2016/appliedStats/problemSets/PS5/anes_timeseries_2012_stata12.dta")
 
 ## model Obama's feeling thermometer score as function
 ## of Clinton's feeling thermometer score

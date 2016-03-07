@@ -316,3 +316,27 @@ setMethod("fitStatistic",
             return(cbind(Model, fitStatisticOutput))
           }
 )
+
+# create prediction matrix and outcome vector (use testSet.caseWise)
+predictionMatrix <- cbind(model1pred, model2pred, model3pred)
+
+# create test object: not vector input (data frame)
+# throw error
+testObject1 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[1])
+
+# create test object: not matrix input (data frame)
+# throw error
+testObject2 <- new("fitInput", predictions = as.data.frame(predictionMatrix), outcomes = testSet.caseWise[, 1])
+
+# create test object: no test statistic specified, default prints all
+testObject3 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1])
+# return object (class "fitInput" w/ outcomes, predictions, and fit statistics specified)
+str(testObject3)
+fitStatistic(testObject3)
+
+# create test object: specify only RMSE and MEAPE (exclude MAD, RMSLE, MAPE)
+testObject4 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1], MAD=F, RMSLE=F, MAPE=F)
+# return object (class "fitInput" w/ outcomes, predictions, and fit statistics specified)
+str(testObject4)
+fitStatistic(testObject4)
+

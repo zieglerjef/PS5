@@ -260,3 +260,59 @@ setGeneric(name = "fitStatistic", def = function(x){
   standardGeneric("fitStatistic")
 })
 
+# create new method fitStatistic
+setMethod("fitStatistic", 
+          # class that method applies to
+          signature="fitInput",
+          # create function
+          definition = function(x) {
+            # check validity
+            validObject(x)
+            # create matrix to be filled by test statistics
+            fitStatisticOutput <- matrix(nrow=dim(x@predictions)[2])
+            # Set up functions for test statistics
+            # RMSE
+            RMSE_function <- function(i){
+              sqrt(mean(abs(x@predictions[, i] - x@outcomes)^2))
+            }
+            if(x@RMSE==T){
+              fitStatisticOutput <- cbind(fitStatisticOutput, sapply(1:dim(x@predictions)[2], FUN=RMSE_function))
+              colnames(fitStatisticOutput)[dim(fitStatisticOutput)[2]] <- "RMSE"
+            }
+            # MAD
+            MAD_function <- function(i){
+              median(abs(x@predictions[,i] - x@outcomes))
+            }
+            if(x@MAD==T){
+              fitStatisticOutput <- cbind(fitStatisticOutput, sapply(1:dim(x@predictions)[2], FUN=MAD_function))
+              colnames(fitStatisticOutput)[dim(fitStatisticOutput)[2]] <- "MAD"
+            }
+            # RMSLE
+            RMSLE_function <- function(i){
+              sqrt(mean((log(x@predictions[,i] + 1) - log(x@outcomes + 1))^2))
+            }
+            if(x@RMSLE==T){
+              fitStatisticOutput <- cbind(fitStatisticOutput, sapply(1:dim(x@predictions)[2], FUN=RMSLE_function))
+              colnames(fitStatisticOutput)[dim(fitStatisticOutput)[2]] <- "RMSLE"
+            }
+            # MAPE
+            MAPE_function <- function(i){
+              sum((abs(x@predictions[,i] - x@outcomes) / abs(x@outcomes))* 100) / length(x@outcomes)
+            }
+            if(x@MAPE==T){
+              fitStatisticOutput <- cbind(fitStatisticOutput, sapply(1:dim(x@predictions)[2], FUN=MAPE_function))
+              colnames(fitStatisticOutput)[dim(fitStatisticOutput)[2]] <- "MAPE"
+            }
+            # MEAPE
+            MEAPE_function <- function(i){
+              median((abs(x@predictions[,i] - x@outcomes) / abs(x@outcomes)) * 100)
+            }
+            if(x@MEAPE==T){
+              fitStatisticOutput <- cbind(fitStatisticOutput, sapply(1:dim(x@predictions)[2], FUN=MEAPE_function))
+              colnames(fitStatisticOutput)[dim(fitStatisticOutput)[2]] <- "MEAPE"
+            }
+            fitStatisticOutput <- fitStatisticOutput[ ,-1]
+            Model <- c(seq(from=1, to=dim(x@predictions)[2], by=1))
+            return(cbind(Model, fitStatisticOutput))
+          }
+)

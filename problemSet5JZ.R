@@ -29,8 +29,10 @@ model1 <- lm(ft_dpc ~ ft_hclinton, anes)
 predict(model1, data.frame(ft_hclinton=77))
 ## we would expect a Obama score of 71.7
 
+##################
+### Question 1 ###
+##################
 
-## Question 1
 ## randomly subset the data into two partitions
 ## use "training set" to build at least three models 
 ## of Obama's feeling thermometer score
@@ -197,11 +199,16 @@ outTableFunc(model2.caseWise)
 outTableFunc(model3.imputed)
 outTableFunc(model3.caseWise)
 
+##################
+### Question 2 ###
+##################
+
 ##################################
 ### retrieve model predictions ###
+##################################
 
 # since coefficient estimates are similar for imputed and casewise deleted models
-# only create test set with predictions from casewise deleted models
+# only create predictions from casewise deleted models
 
 # get predictions for:
 # model 1
@@ -212,3 +219,44 @@ model2pred <- predict(model2.caseWise, testSet.caseWise)
 
 # model 3
 model3pred <- predict(model3.caseWise, testSet.caseWise)
+
+
+##################
+### Question 3 ###
+##################
+
+# construct object to regulate input for fitStatistic function
+setClass(Class="fitInput",
+         # specify that all inputs should be numeric
+         slots = c(outcomes = "numeric",
+                   predictions = "matrix",
+                   RMSE = "logical",
+                   MAD = "logical",
+                   RMSLE = "logical",
+                   MAPE = "logical",
+                   MEAPE = "logical"
+         ),
+         # set default to show all test statistics
+         prototype = prototype(
+           RMSE = TRUE,
+           MAD = TRUE,
+           RMSLE = TRUE,
+           MAPE = TRUE,
+           MEAPE = TRUE
+         ),
+         # specify superclass of elements in predictions matrix
+         contains = "numeric",
+         # create validity check
+         validity = function(object){
+           # make sure dimensions match
+           if(dim(object@predictions)[1] != length(object@outcomes)){
+             stop("Differing length between outcomes and predictions.")
+           }
+         }
+)
+
+# create generic function that executes method 
+setGeneric(name = "fitStatistic", def = function(x){
+  standardGeneric("fitStatistic")
+})
+

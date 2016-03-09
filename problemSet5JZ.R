@@ -348,3 +348,142 @@ fitStatistic(testObject4)
 fitStatistic(testObject3)
 # For each  statistic, model 2 appears to have the best fit!
 
+#####################
+### Grad students ###
+#####################
+
+# re-construct object to regulate input
+# should work with either function: fitStatistic1 and fitStatistic
+setClass(Class="fitInput",
+         # specify that all inputs should be numeric
+         slots = c(outcomes = "numeric",
+                   naive = "numeric",
+                   predictions = "matrix",
+                   RMSE = "logical",
+                   MAD = "logical",
+                   RMSLE = "logical",
+                   MAPE = "logical",
+                   MEAPE = "logical",
+                   MRAE = "logical"
+         ),
+         # set default to show all test statistics
+         prototype = prototype(
+           RMSE = TRUE,
+           MAD = TRUE,
+           RMSLE = TRUE,
+           MAPE = TRUE,
+           MEAPE = TRUE,
+           MRAE = FALSE
+         ),
+         # specify superclass of elements in predictions matrix
+         contains = "numeric",
+         # create validity check
+         validity = function(object){
+           # make sure dimensions match
+           if(dim(object@predictions)[1] != length(object@outcomes)){
+             stop("Differing length between outcomes and predictions.")
+           }
+         }
+)
+
+# create generic function that executes method 
+setGeneric(name = "fitStatistic1", def = function(x){
+  standardGeneric("fitStatistic1")
+})
+
+# create new method fitStatistic
+setMethod("fitStatistic1", 
+          # class that method applies to
+          signature="fitInput",
+          # create function
+          definition = function(x) {
+            # check validity
+            validObject(x)
+            # create matrix to be filled by test statistics
+            fitStatisticOutput <- matrix(nrow=dim(x@predictions)[2])
+            # Set up functions for test statistics
+            # MRAE
+            MRAE_function <- function(i){
+              median((x@predictions[, i] - x@outcomes)/(x@naive - x@outcomes))
+            }
+            if(x@MRAE==T & length(x@naive) > 0){
+              fitStatisticOutput <- cbind(fitStatisticOutput, sapply(1:dim(x@predictions)[2], FUN=MRAE_function))
+              colnames(fitStatisticOutput)[dim(fitStatisticOutput)[2]] <- "MRAE"
+            }
+            # RMSE
+            RMSE_function <- function(i){
+              sqrt(mean(abs(x@predictions[, i] - x@outcomes)^2))
+            }
+            if(x@RMSE==T){
+              fitStatisticOutput <- cbind(fitStatisticOutput, sapply(1:dim(x@predictions)[2], FUN=RMSE_function))
+              colnames(fitStatisticOutput)[dim(fitStatisticOutput)[2]] <- "RMSE"
+            }
+            # MAD
+            MAD_function <- function(i){
+              median(abs(x@predictions[,i] - x@outcomes))
+            }
+            if(x@MAD==T){
+              fitStatisticOutput <- cbind(fitStatisticOutput, sapply(1:dim(x@predictions)[2], FUN=MAD_function))
+              colnames(fitStatisticOutput)[dim(fitStatisticOutput)[2]] <- "MAD"
+            }
+            # RMSLE
+            RMSLE_function <- function(i){
+              sqrt(mean((log(x@predictions[,i] + 1) - log(x@outcomes + 1))^2))
+            }
+            if(x@RMSLE==T){
+              fitStatisticOutput <- cbind(fitStatisticOutput, sapply(1:dim(x@predictions)[2], FUN=RMSLE_function))
+              colnames(fitStatisticOutput)[dim(fitStatisticOutput)[2]] <- "RMSLE"
+            }
+            # MAPE
+            MAPE_function <- function(i){
+              mean((abs(x@predictions[,i] - x@outcomes) / abs(x@outcomes))* 100)
+            }
+            if(x@MAPE==T){
+              fitStatisticOutput <- cbind(fitStatisticOutput, sapply(1:dim(x@predictions)[2], FUN=MAPE_function))
+              colnames(fitStatisticOutput)[dim(fitStatisticOutput)[2]] <- "MAPE"
+            }
+            # MEAPE
+            MEAPE_function <- function(i){
+              median((abs(x@predictions[,i] - x@outcomes) / abs(x@outcomes)) * 100)
+            }
+            if(x@MEAPE==T){
+              fitStatisticOutput <- cbind(fitStatisticOutput, sapply(1:dim(x@predictions)[2], FUN=MEAPE_function))
+              colnames(fitStatisticOutput)[dim(fitStatisticOutput)[2]] <- "MEAPE"
+            }
+            fitStatisticOutput <- fitStatisticOutput[ ,-1]
+            Model <- c(seq(from=1, to=dim(x@predictions)[2], by=1))
+            return(cbind(Model, fitStatisticOutput))
+          }
+)
+
+# create naive forecasts (r_i)
+naiveForecast <- naiveBayes(as.factor(ft_dpc) ~ black + hispanic + partyID + age + education + employed, data = trainingSet.caseWise)
+predNaive <- predict(model1.naiveForecast, testSet.caseWise)
+
+# create test object: MRAE not specified w/o naive predictions
+testObject5 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1])
+# return object (class "fitInput" w/ outcomes, predictions, and MRAE = FALSE)
+str(testObject5)
+# function still works w/o MRAE
+fitStatistic1(testObject5)
+
+# create test object: MRAE specified w/o naive predictions
+testObject6 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1], MRAE=T)
+# return object (class "fitInput" w/ outcomes, predictions, NO naive values, and MRAE = TRUE)
+str(testObject6)
+# function still works with MRAE removed
+fitStatistic1(testObject6)
+
+# create test object: MRAE not specified w/ naive predictions
+testObject7 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1], naive = predNaive)
+# return object (class "fitInput" w/ outcomes, predictions, naive values, and MRAE = FALSE as default)
+str(testObject7)
+# function still works with MRAE removed
+fitStatistic1(testObject7)
+
+# create test object: MRAE specified w/ naive predictions
+testObject8 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1], naive = predNaive, MRAE=T)
+# return object (class "fitInput" w/ outcomes, predictions, naive values, and MRAE = TRUE)
+str(testObject8)
+# function still works with MRAE removed
+fitStatistic1(testObject8)

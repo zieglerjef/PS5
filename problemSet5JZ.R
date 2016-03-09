@@ -485,5 +485,5 @@ fitStatistic1(testObject7)
 testObject8 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1], naive = predNaive, MRAE=T)
 # return object (class "fitInput" w/ outcomes, predictions, naive values, and MRAE = TRUE)
 str(testObject8)
-# function still works with MRAE removed
+# function still works with MRAE
 fitStatistic1(testObject8)

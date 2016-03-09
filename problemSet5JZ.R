@@ -44,26 +44,30 @@ anesSub <- NULL
 
 # recode: ft_dpc
 anesSub$ft_dpc <- as.numeric(revalue(as.character(anes$ft_dpc),  replace=c("-2"=NA, "-8"=NA, "-9"=NA)))
-# which(is.na(anes$ft_dpc))
+# which(is.na(anesSub$ft_dpc))
 # resulting missingness n=15 
+# make sure that no outcomes == 0, add 0.000001 if anesSub$ft_dpc == 0
+# necessary because MAPE will return infinity later if anesSub$ft_dpc == 0
+anesSub$ft_dpc <- ifelse(anesSub$ft_dpc == 0, anesSub$ft_dpc + 0.000001, anesSub$ft_dpc)
+# which(anesSub$ft_dpc == 0) should now return integer(0)
 
 # recode: dem_agegrp_iwdate_x
 anesSub$age <- as.factor(revalue(anes$dem_agegrp_iwdate_x, replace=c("-2. Missing, birthdate fields left blank"=NA)))
 
 # recode: dem_edugroup_x
 anesSub$education <- as.factor(revalue(anes$dem_edugroup_x, replace=c("-9. Refused"=NA,
-                                       "-8. Don't know"=NA, "-2. Missing, other not codeable to 1-5"=NA)))
+                                                                      "-8. Don't know"=NA, "-2. Missing, other not codeable to 1-5"=NA)))
 
 # recode: pid_self
 anesSub$partyID <- as.factor(revalue(anes$pid_self, replace=c("-9. Refused"=NA,
-                                                               "-8. Don't know"=NA)))
+                                                              "-8. Don't know"=NA)))
 
 # recode: dem_racecps_black
 anesSub$black <- as.factor(anes$dem_racecps_black)
 
 # recode: dem_hisp
 anesSub$hispanic <- as.factor(revalue(anes$dem_hisp, replace=c("-9. Refused"=NA,
-                                       "-8. Don't know"=NA)))
+                                                               "-8. Don't know"=NA)))
 
 # recode: dem_hsworkg
 anesSub$employed <- as.factor(anes$dem_emptype_work)
@@ -105,6 +109,7 @@ sumMissing <- function(df){
 sumMissing(trainingSet)
 # missingness: trainingSet
 sumMissing(testSet)
+# less than 1% in both datasets
 
 ### create training sets with:
 # 1) multiple impututation and 
@@ -143,7 +148,7 @@ model3.caseWise <- lm(ft_dpc ~ education + employed, data = trainingSet.caseWise
 
 # initiate function
 outTableFunc <- function(modelImputed){
-
+  
   # if normal lm:
   if(class(modelImputed)=="lm"){
     summary(modelImputed)[4]
@@ -153,37 +158,37 @@ outTableFunc <- function(modelImputed){
   ## read the first argument, which is FALSE for imputed models
   else{
     
-  # param=1 gives coefficient estimates, param=2 gives SEs
-  lm.mids.vals <- function(obj,param) { 
-    out.mat <- NULL
-    for (i in 1:obj$call1$m) 
-      out.mat <- rbind(out.mat,summary.lm(obj$analyses[[i]])$coef[,param])
-    out.mat
-  }
-
-  ### get three required vectors ###
-  # mean coefficient estimate
-  impute.coef.vec <- apply(lm.mids.vals(modelImputed,1),2,mean)
-  # variation in coefficient estimates
-  between.var <- apply(lm.mids.vals(modelImputed,1),2,var)
-  # standard error of coefficients
-  within.var <- apply(lm.mids.vals(modelImputed,2)^2,2,mean)
-
-  ### compute standard errors ###
-  m.sets <- 5
-  impute.se.vec <- sqrt(within.var + ((m.sets+1)/m.sets)*between.var)
-
-  ### adjust degrees of freedom for t-statistic ###
-  # see Little & Rubin (1987), p. 257
-  impute.df <- (m.sets-1)*(1 + (1/(m.sets+1)) * within.var/between.var)^2
-
-  ### print table ###
-  # construct table
-  out.table <- round(cbind(impute.coef.vec,impute.se.vec,impute.coef.vec/impute.se.vec,
-                           1-pt(abs(impute.coef.vec/impute.se.vec), impute.df)),6)
-  # add labeling
-  colnames(out.table) <- c("Estimate","Std. Error","t value","Pr(>|t|)")
-  out.table
+    # param=1 gives coefficient estimates, param=2 gives SEs
+    lm.mids.vals <- function(obj,param) { 
+      out.mat <- NULL
+      for (i in 1:obj$call1$m) 
+        out.mat <- rbind(out.mat,summary.lm(obj$analyses[[i]])$coef[,param])
+      out.mat
+    }
+    
+    ### get three required vectors ###
+    # mean coefficient estimate
+    impute.coef.vec <- apply(lm.mids.vals(modelImputed,1),2,mean)
+    # variation in coefficient estimates
+    between.var <- apply(lm.mids.vals(modelImputed,1),2,var)
+    # standard error of coefficients
+    within.var <- apply(lm.mids.vals(modelImputed,2)^2,2,mean)
+    
+    ### compute standard errors ###
+    m.sets <- 5
+    impute.se.vec <- sqrt(within.var + ((m.sets+1)/m.sets)*between.var)
+    
+    ### adjust degrees of freedom for t-statistic ###
+    # see Little & Rubin (1987), p. 257
+    impute.df <- (m.sets-1)*(1 + (1/(m.sets+1)) * within.var/between.var)^2
+    
+    ### print table ###
+    # construct table
+    out.table <- round(cbind(impute.coef.vec,impute.se.vec,impute.coef.vec/impute.se.vec,
+                             1-pt(abs(impute.coef.vec/impute.se.vec), impute.df)),6)
+    # add labeling
+    colnames(out.table) <- c("Estimate","Std. Error","t value","Pr(>|t|)")
+    out.table
   }
 }
 
@@ -359,7 +364,7 @@ fitStatistic(testObject4)
 ####################
 
 fitStatistic(testObject3)
-# For each  statistic, model 2 appears to have the best fit!
+## For each  statistic, model 2 appears to have the best fit!
 
 #####################
 ### Grad students ###
@@ -386,7 +391,7 @@ setClass(Class="fitInput",
            RMSLE = TRUE,
            MAPE = TRUE,
            MEAPE = TRUE,
-           MRAE = FALSE
+           MRAE = TRUE
          ),
          # specify superclass of elements in predictions matrix
          contains = "numeric",
@@ -469,28 +474,28 @@ setMethod("fitStatistic1",
             cat("\n Fit Statistics of Specified Models: \n")
             print(cbind(Model, fitStatisticOutput))
             cat("\n Formula Calculations: \n")
-              if(x@MRAE==T & length(x@naive) > 0){
-                cat("\n MRAE = med(e_1/b_1 ,..., e_n/b_n)")}
-              if(x@RMSE==T){
-                cat("\n RMSE = sqrt(sum(e_i^2)/n)")}
-              if(x@MAD==T){
-                cat("\n MAD = med(e)")}
-              if(x@RMSLE==T){
-                cat("\n RMSLE = sqrt(sum(ln(p_i + 1) - ln(y_i + 1))^2/n)")}
-              if(x@MAPE==T){
-                cat("\n MAPE = sum(a_i)/n")}
-              if(x@MEAPE==T){
-                cat("\n MEAPE = med(a)")}
+            if(x@MRAE==T & length(x@naive) > 0){
+              cat("\n MRAE = med(e_1/b_1 ,..., e_n/b_n)")}
+            if(x@RMSE==T){
+              cat("\n RMSE = sqrt(sum(e_i^2)/n)")}
+            if(x@MAD==T){
+              cat("\n MAD = med(e)")}
+            if(x@RMSLE==T){
+              cat("\n RMSLE = sqrt(sum(ln(p_i + 1) - ln(y_i + 1))^2/n)")}
+            if(x@MAPE==T){
+              cat("\n MAPE = sum(a_i)/n")}
+            if(x@MEAPE==T){
+              cat("\n MEAPE = med(a)")}
           }
 )
 
 # create naive forecasts (r_i)
 naiveForecast <- naiveBayes(as.factor(ft_dpc) ~ black + hispanic + partyID + age + education + employed, data = trainingSet.caseWise)
-predNaive <- predict(model1.naiveForecast, testSet.caseWise)
+predNaive <- predict(naiveForecast, testSet.caseWise)
 
 # create test object: MRAE not specified w/o naive predictions
 testObject5 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1])
-# return object (class "fitInput" w/ outcomes, predictions, and MRAE = FALSE)
+# return object (class "fitInput" w/ outcomes, predictions, and MRAE = TRUE)
 str(testObject5)
 # function still works w/o MRAE
 fitStatistic1(testObject5)
@@ -502,16 +507,16 @@ str(testObject6)
 # function still works with MRAE removed
 fitStatistic1(testObject6)
 
-# create test object: MRAE not specified w/ naive predictions
-testObject7 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1], naive = predNaive)
-# return object (class "fitInput" w/ outcomes, predictions, naive values, and MRAE = FALSE as default)
+# create test object: MRAE specified w/ naive predictions
+testObject7 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1], naive = predNaive, MRAE=T)
+# return object (class "fitInput" w/ outcomes, predictions, naive values, and MRAE = TRUE as default)
 str(testObject7)
-# function still works with MRAE removed
+# function still works with MRAE included
 fitStatistic1(testObject7)
 
-# create test object: MRAE specified w/ naive predictions
-testObject8 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1], naive = predNaive, MRAE=T)
+# create test object: MRAE specified by default w/ naive predictions
+testObject8 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1], naive = predNaive)
 # return object (class "fitInput" w/ outcomes, predictions, naive values, and MRAE = TRUE)
 str(testObject8)
-# function still works with MRAE
+# function still works with MRAE included
 fitStatistic1(testObject8)

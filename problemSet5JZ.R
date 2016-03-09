@@ -314,7 +314,20 @@ setMethod("fitStatistic",
             }
             fitStatisticOutput <- fitStatisticOutput[ ,-1]
             Model <- c(seq(from=1, to=dim(x@predictions)[2], by=1))
-            return(cbind(Model, fitStatisticOutput))
+            # return message and matrix of fit statistics
+            cat("\n Fit Statistics of Specified Models: \n")
+            print(cbind(Model, fitStatisticOutput))
+            cat("\n Formula Calculations: \n")
+            if(x@RMSE==T){
+              cat("\n RMSE = sqrt(sum(e_i^2)/n)")}
+            if(x@MAD==T){
+              cat("\n MAD = med(e)")}
+            if(x@RMSLE==T){
+              cat("\n RMSLE = sqrt(sum(ln(p_i + 1) - ln(y_i + 1))^2/n)")}
+            if(x@MAPE==T){
+              cat("\n MAPE = sum(a_i)/n")}
+            if(x@MEAPE==T){
+              cat("\n MEAPE = med(a)")}
           }
 )
 
@@ -329,14 +342,14 @@ testObject1 <- new("fitInput", predictions = predictionMatrix, outcomes = testSe
 # throw error
 testObject2 <- new("fitInput", predictions = as.data.frame(predictionMatrix), outcomes = testSet.caseWise[, 1])
 
-# create test object: no test statistic specified, default prints all
-testObject3 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1])
+# create test object: specify only RMSE and MEAPE (exclude MAD, RMSLE, MAPE)
+testObject3 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1], MAD=F, RMSLE=F, MAPE=F)
 # return object (class "fitInput" w/ outcomes, predictions, and fit statistics specified)
 str(testObject3)
 fitStatistic(testObject3)
 
-# create test object: specify only RMSE and MEAPE (exclude MAD, RMSLE, MAPE)
-testObject4 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1], MAD=F, RMSLE=F, MAPE=F)
+# create test object: no test statistic specified, default prints all
+testObject4 <- new("fitInput", predictions = predictionMatrix, outcomes = testSet.caseWise[, 1])
 # return object (class "fitInput" w/ outcomes, predictions, and fit statistics specified)
 str(testObject4)
 fitStatistic(testObject4)
@@ -452,7 +465,22 @@ setMethod("fitStatistic1",
             }
             fitStatisticOutput <- fitStatisticOutput[ ,-1]
             Model <- c(seq(from=1, to=dim(x@predictions)[2], by=1))
-            return(cbind(Model, fitStatisticOutput))
+            # return message and matrix of fit statistics
+            cat("\n Fit Statistics of Specified Models: \n")
+            print(cbind(Model, fitStatisticOutput))
+            cat("\n Formula Calculations: \n")
+              if(x@MRAE==T & length(x@naive) > 0){
+                cat("\n MRAE = med(e_1/b_1 ,..., e_n/b_n)")}
+              if(x@RMSE==T){
+                cat("\n RMSE = sqrt(sum(e_i^2)/n)")}
+              if(x@MAD==T){
+                cat("\n MAD = med(e)")}
+              if(x@RMSLE==T){
+                cat("\n RMSLE = sqrt(sum(ln(p_i + 1) - ln(y_i + 1))^2/n)")}
+              if(x@MAPE==T){
+                cat("\n MAPE = sum(a_i)/n")}
+              if(x@MEAPE==T){
+                cat("\n MEAPE = med(a)")}
           }
 )
 

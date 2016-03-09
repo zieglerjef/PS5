@@ -16,6 +16,7 @@ library(foreign)
 library(mice)
 library(plyr)
 library(Hmisc)
+library(e1071)
 
 # read in data
 anes <- read.dta("~/Google Drive/WashU/Spring2016/appliedStats/problemSets/PS5/anes_timeseries_2012_stata12.dta")
@@ -297,7 +298,7 @@ setMethod("fitStatistic",
             }
             # MAPE
             MAPE_function <- function(i){
-              sum((abs(x@predictions[,i] - x@outcomes) / abs(x@outcomes))* 100) / length(x@outcomes)
+              mean((abs(x@predictions[,i] - x@outcomes) / abs(x@outcomes))* 100)
             }
             if(x@MAPE==T){
               fitStatisticOutput <- cbind(fitStatisticOutput, sapply(1:dim(x@predictions)[2], FUN=MAPE_function))
@@ -339,4 +340,11 @@ testObject4 <- new("fitInput", predictions = predictionMatrix, outcomes = testSe
 # return object (class "fitInput" w/ outcomes, predictions, and fit statistics specified)
 str(testObject4)
 fitStatistic(testObject4)
+
+####################
+### Evaluate fit ###
+####################
+
+fitStatistic(testObject3)
+# For each  statistic, model 2 appears to have the best fit!
 
